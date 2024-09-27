@@ -44,8 +44,9 @@ def get_dji_meta(filepath: str) -> dict:
      """
 
     # list of metadata tags
-    djimeta = ["AbsoluteAltitude", "RelativeAltitude", "GimbalRollDegree", "GimbalYawDegree", \
-               "GimbalPitchDegree", "FlightRollDegree", "FlightYawDegree", "FlightPitchDegree", "GpsLatitude", "GpsLongitude"]
+    djimeta = ["AbsoluteAltitude", "RelativeAltitude", "GimbalRollDegree", "GimbalYawDegree",
+               "GimbalPitchDegree", "FlightRollDegree", "FlightYawDegree", "FlightPitchDegree",
+               "GpsLatitude", "GpsLongitude", "RtkStdLon", "RtkStdLat", "RtkStdHgt"]
 
     # read file in binary format and look for XMP metadata portion
     fd = open(filepath, 'rb')
@@ -80,6 +81,7 @@ class ImagesMeta:
         self.lla = []
         self.utm = []
         self.ecef = []
+        self.rtk_std = []
         self.file_num =[] # the image number from DJI filename
 
         with open(images_txt_file, 'r') as f:
@@ -103,9 +105,10 @@ class ImagesMeta:
                         self.lla.append(np.array([meta['GpsLatitude'], meta['GpsLongitude'], meta['AbsoluteAltitude']]))
                         UTMx, UTMy = myProj(meta['GpsLongitude'], meta['GpsLatitude'])
                         #Lon2, Lat2 = myProj(UTMx, UTMy, inverse=True)
-                        self.utm.append([UTMx, UTMy, meta['AbsoluteAltitude']])
+                        self.utm.append(np.array([UTMx, UTMy, meta['AbsoluteAltitude']]))
                         _, ecef = latlonalt_to_ecef_matrix(meta['GpsLatitude'], meta['GpsLongitude'],
                                                            meta['AbsoluteAltitude'])
+                        self.rtk_std.append(np.linalg.norm([meta['RtkStdLon'], meta['RtkStdLat'], meta['RtkStdHgt']]))
                         self.ecef.append(ecef)
 
         self.q_vec = np.array(self.q_vec, dtype=np.float32)
